@@ -23,6 +23,77 @@ namespace DogGo.Repositories
             }
         }
 
+        public Walker GetWalksByWalkerId(Walker walker)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using(SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"Select * From Walks Where WalkerId = @id";
+
+                    cmd.Parameters.AddWithValue("@id", walker.Id);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Walk walk = new Walk
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Date = reader.GetDateTime(reader.GetOrdinal("Date")),
+                                Duration = reader.GetInt32(reader.GetOrdinal("Duration")),
+                                WalkerId = walker.Id,
+                                DogId = reader.GetInt32(reader.GetOrdinal("DogId"))
+                            };
+
+                            walker.Walks.Add(walk);
+
+                        }
+                        return walker;
+                    }
+                }
+            }
+        }
+
+        public List<Walker> GetWalkersInNeighborhood(int neighborhoodId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                SELECT Id, [Name], ImageUrl, NeighborhoodId
+                FROM Walker
+                WHERE NeighborhoodId = @neighborhoodId
+            ";
+
+                    cmd.Parameters.AddWithValue("@neighborhoodId", neighborhoodId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+
+                        List<Walker> walkers = new List<Walker>();
+                        while (reader.Read())
+                        {
+                            Walker walker = new Walker
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
+                                NeighborhoodId = reader.GetInt32(reader.GetOrdinal("NeighborhoodId"))
+                            };
+
+                            walkers.Add(walker);
+                        }
+
+                        return walkers;
+                    }
+                }
+            }
+        }
+
         public List<Walker> GetAllWalkers()
         {
             using (SqlConnection conn = Connection)
