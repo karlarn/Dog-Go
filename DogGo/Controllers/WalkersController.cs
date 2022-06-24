@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using DogGo.Repositories;
 using System.Collections.Generic;
 using DogGo.Models;
+using System.Security.Claims;
+using System;
 
 namespace DogGo.Controllers
 {
@@ -22,12 +24,29 @@ namespace DogGo.Controllers
             _ownerRepository = ownerRepository;
             _dogRepo = dogRepository;
         }
+
+        private int GetCurrentUserId()
+        {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.Parse(id);
+        }
         // GET: WalkersController
         public ActionResult Index()
         {
-            List<Walker> walkers = _walkerRepo.GetAllWalkers();
+            try
+            {
+                Owner activeUser = _ownerRepository.GetOwnerById(GetCurrentUserId());
+                List<Walker> walkers = _walkerRepo.GetWalkersInNeighborhood(activeUser.NeighborhoodId);
 
-            return View(walkers);
+                return View(walkers);
+            }
+            catch(Exception)
+            {
+                List<Walker> allWalkers = _walkerRepo.GetAllWalkers();
+                return View(allWalkers);
+            }
+            
+            
         }
 
         // GET: WalkersController/Details/5
